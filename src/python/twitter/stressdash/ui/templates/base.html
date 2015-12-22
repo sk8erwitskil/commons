@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>Stressdash - {% block title %}{% endblock %}</title>
+
+    <!-- Bootstrap core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="//twstatic.twitter.biz/lib/bootstrap-datetimepicker/3.1.3/bootstrap-datetimepicker.min.css" rel="stylesheet">
+    <link href="/static/css/stressdash.css" rel="stylesheet">
+    <link href="/static/css/jquery.dataTables.min.css" rel="stylesheet">
+    <link href="/static/images/favicon.ico" rel="icon" type="image/x-icon">
+    {% block css %}{% endblock %}
+  </head>
+
+  <body>
+
+    <!-- Static navbar -->
+    <div class="navbar navbar-default navbar-static-top" role="navigation">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="/">Stressdash</a>
+        </div>
+        <div class="collapse navbar-collapse">
+          <ul class="nav navbar-nav navbar-right">
+            <li>
+              <a href="{{ url_for('recent') }}"><span class="glyphicon glyphicon-align-left"></span> Recent Tests</a>
+            </li>
+            <li>
+              <a href="/"><span class="glyphicon glyphicon-align-left"></span> All Features</a>
+            </li>
+            <li>
+              <a href="{{ url_for('new_feature') }}"><span class="glyphicon glyphicon-align-left"></span> New Feature</a>
+            </li>
+            <li class="dropdown">
+              <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-haspopup="true" aria-expanded="false"><span class="glyphicon glyphicon-user"></span> {{ current_user }} <span class="caret"></span></a>
+              <ul class="dropdown-menu">
+                {% if oi_disabled %}
+                  <li><a href="#" id="showOI">Show Outstanding Issues</a></li>
+                {% else %}
+                  <li><a href="#" id="hideOI">Hide Outstanding Issues</a></li>
+                {% endif %}
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="container-fluid" id="runningTests">
+    </div>
+
+    {% if not oi_disabled %}
+      <div class="container-fluid" id="outstandingIssues">
+      </div>
+    {% endif %}
+
+    <div class="container">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        {% for category, message in messages %}
+          <div class="alert alert-{{ category }} alert-dismissable fade in">
+            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+            {{ message }}
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+    </div> <!-- /container -->
+
+    <script type="text/javascript" src="//twstatic.twitter.biz/lib/jquery/2.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="//twstatic.twitter.biz/lib/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="//twstatic.twitter.biz/lib/momentjs/2.8.3/moment.min.js"></script>
+    <script type="text/javascript" src="//twstatic.twitter.biz/lib/bootstrap-datetimepicker/3.1.3/bootstrap-datetimepicker.min.js"></script>
+    <script type="text/javascript" src="/static/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript" src="/static/js/whats.js"></script>
+    <script type="text/javascript" src="/static/js/cache.js"></script>
+    <script type="text/javascript">
+      runUpdates();
+      $("#hideOI").click(function(){
+        setCache("{{ oi_key }}", true);
+      });
+      $("#showOI").click(function(){
+        deleteCache("{{ oi_key }}");
+      });
+    </script>
+    {% block javascript %}{% endblock %}
+  </body>
+</html>

@@ -1,0 +1,34 @@
+components:
+  - CRT.stresstest_testing
+duration_minutes: 30
+risk: Medium
+issue_type: Other
+summary: "{{ feature.name|title }} stresstest in {{ this.dc }}"
+planned_start: "{{ this.planned_start }}"
+additional:
+  assignee: {{ this.current_user }}
+  description: |
+    The test is going to be in {{ this.dc }} we will aim to hit {{ feature.target_rps }} for "{{ feature.name }}" or find the limit -- whichever comes first. 
+    
+    150K of our users will be used in this test. They follow each others where every users has 10 - 2000 followers. Only 1591 users are out side that range, and they all have 10K followers.
+    We will be using users to call the corresponding endpoints and will be using ATLA public LB. From past experience, the test should not add more than 10Gbps and it will be distributed evenly among all public LB.
+    
+    We will be sending the load in batches of {{ this.qps_per_batch }}. We have proactively warmed the users timelines and ran small scale tests.
+    
+    To launch 
+    
+    {code}
+    ./corvus launch -N --pcm=<THIS PCM> --qps={{ feature.target_rps }} --qps_per_batch={{ this.qps_per_batch }} {{ feature.corvus_name }}
+    {code}
+
+    <<stresstest_stats>>
+    zone: {{ this.dc }}
+    successful:
+    sustained_minutes:
+    <<stresstest_stats>>
+
+validation_steps: |
+  Monitor the following viz dashboards {{ feature.dashboard_slugs }}
+
+backout_steps: |
+  ./corvus kill --batch=0-30 --pcm=<THIS PCM> {{ feature.corvus_name }}

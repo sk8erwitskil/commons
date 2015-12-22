@@ -1,0 +1,31 @@
+import os
+
+environment = os.getenv('ENV', 'staging')
+
+download = Packer.copy('stressdash', version='latest')
+
+run = Process(
+  name = 'run',
+  cmdline = 'chmod +x stressdash.pex && ./stressdash.pex server --env={{environment}} --port={{thermos.ports[http]}} --twkey=/etc/twkeys/stresstest/stressdash/creds.yml'
+)
+
+task = Task(
+  processes = [download, run, Stats(library = 'science', port = 'http')],
+  constraints = order(download, run),
+  resources = Resources(cpu = 1, ram = 1 * GB, disk = 1 * GB)
+)
+
+job = Service(
+  name='stressdash',
+  role='stresstest',
+  cluster='smf1',
+  task=task,
+  environment=environment,
+  instances=2,
+  production=environment == 'prod',
+  announce=Announcer(primary_port='http', portmap={'health': 'http'}),
+  health_check_config=HealthCheckConfig(initial_interval_secs=240),
+  update_config=UpdateConfig(watch_secs=241),
+)
+
+jobs = [job]

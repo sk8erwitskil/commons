@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}Recent Tests - {{ days }} days{% endblock %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#testListTable").dataTable({"paging": true, "pagingType": "full_numbers" });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3 class="row">Recent Tests <small>{{ days }} days</small></h3>
+</div>
+
+{% import "macros.html" as macros %}
+{{ macros.render_test_list( tests, get_feature ) }}
+
+{% endblock %}

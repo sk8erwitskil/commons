@@ -1,0 +1,122 @@
+{% macro jira_url(key) -%}
+  {% if key %}
+    <a href="https://jira.twitter.biz/browse/{{ key }}">{{ key }}</a>
+  {% endif %}
+{%- endmacro %}
+
+{% macro vizurl(slug) -%}
+  <a href="https://go.twitter.biz/viz/{{ slug.strip() }}">{{ slug.strip() }}</a>
+{%- endmacro %}
+
+{% macro viz_links(slugs) -%}
+  {% for slug in slugs %}
+    {{ vizurl(slug) }} 
+  {% endfor %}
+{%- endmacro %}
+
+{% macro status_button(success) -%}
+  {% if success %}
+    <button type="button" class="btn btn-success btn-sm" disabled="disabled">True</button>
+  {% else %}
+    <button type="button" class="btn btn-danger btn-sm" disabled="disabled">False</button>
+  {% endif %}
+{%- endmacro %}
+
+{% macro test_status(test) -%}
+  {% if test %}
+    {% if test.successful %}
+      <button type="button" class="btn btn-success btn-sm" disabled="disabled">{{ test.ended_at }}</button>
+    {% else %}
+      <button type="button" class="btn btn-danger btn-sm" disabled="disabled">{{ test.ended_at }}</button>
+    {% endif %}
+  {% endif %}
+{%- endmacro %}
+
+{% macro render_checkbox_field(field, is_checked=True) -%}
+ <div class="checkbox">
+   <label>
+     <input type="checkbox" name="{{ field.id }}" {% if is_checked %}checked="checked"{% endif %}> {{ field.label }}
+   </label>
+ </div>
+{%- endmacro %}
+
+{% macro render_field(field) -%}
+  <div class="form-group {% if field.errors %}has-error{% endif %}">
+    {% if field.type != 'HiddenField' and field.id != 'csrf_token' %}
+      <label for="{{ field.id }}" class="control-label">{{ field.label }}</label>
+    {% endif %}
+    {{ field(class='form-control') }}
+    {% if field.description %}
+      <p class="help-block">{{ field.description }}</p>
+    {% endif %}
+    {% if field.errors %}
+      {% for e in field.errors %}
+        <p class="help-block">{{ e }}</p>
+      {% endfor %}
+    {% endif %}
+  </div>
+{%- endmacro %}
+
+{% macro render_form(form, action_url, action_text='Submit', btn_class='btn btn-primary') -%}
+  <div class="col-md-6">
+    <form method="POST" action="{{ action_url }}" role="form">
+      {{ form.hidden_tag() }}
+      {% for f in form %}
+        {% if f.type == 'BooleanField' %}
+          {{ render_checkbox_field(f, form.successful.data) }}
+        {% elif f.type == 'RadioField' %}
+          {{ render_radio_field(f) }}
+        {% else %}
+          {{ render_field(f) }}
+        {% endif %}
+      {% endfor %}
+      <button type="submit" class="{{ btn_class }}">{{ action_text }} </button>
+    </form>
+  </div>
+{%- endmacro %}
+
+{% macro render_test_list(tests, get_feature=None) -%}
+<div>
+  <table id="testListTable" class="table table-striped">
+    <thead>
+      <tr>
+        {% if get_feature %}
+          <th class="col-md-2">Feature</th>
+        {% endif %}
+        <th class="col-md-1">Start Time</th>
+        <th class="col-md-1">End Time</th>
+        <th class="col-md-1">Zone</th>
+        <th class="col-md-1">Target RPS</th>
+        <th class="col-md-1">Max RPS</th>
+        <th class="col-md-1">Minutes Sustained</th>
+        <th class="col-md-1">Jira Ticket</th>
+        <th class="col-md-1">Successful</th>
+        <th class="col-md-1">Edit</th>
+      </tr>
+    </thead>
+    </tbody>
+      {% for test in tests %}
+        <tr>
+          {% if get_feature %}
+            {% set feature = get_feature(test.feature_id) %}
+            <td><a href="{{ url_for('show_feature', feature_id=feature.id) }}">{{ feature.name }}</a></td>
+          {% endif %}
+          <td><a href="{{ url_for('show_test', feature_id=test.feature_id, test_id=test.id) }}">{{ test.started_at }}</a></td>
+          <td>{{ test.ended_at }}</td>
+          <td>{{ test.zone }}</td>
+          <td>{{ test.target_rps|num_fmt }}</td>
+          <td>{{ test.max_rps|num_fmt }}</td>
+          <td>{{ test.sustained_minutes }}</td>
+          <td>{{ jira_url(test.jira_key) }}</td>
+          <td>{{ status_button(test.successful) }}</td>
+          <td>
+            <div class="col-md-1">
+              <a href="{{ url_for('edit_test', feature_id=test.feature_id, test_id=test.id) }}"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></a>
+            </div>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{%- endmacro %}

@@ -1,0 +1,10 @@
+ENABLE_AUTHENTICATION: true
+ELFOWL_AUTH_DOMAIN: .service.smf1.twitter.biz
+# created using go/db. 100GB allowance. this should be fine
+# for pagerduck use.
+MYSQL_HOST: stressdash.rw.ss-001.smf1.db.twitter.biz
+MYSQL_DB: stressdash
+MYSQL_CRED_PREFIX: rw_db_
+TWKEYS: /etc/twkeys/stresstest/stressdash/service.yml
+ENABLE_LOGLENS: true
+LOGLENS_INDICES: stressdash_prod

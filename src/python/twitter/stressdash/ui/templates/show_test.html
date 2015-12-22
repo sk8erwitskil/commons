@@ -1,0 +1,198 @@
+{% extends 'base.html' %}
+{% block title %}{{ feature.name }} test {{ test.id }}{% endblock %}
+{% import "macros.html" as macros %}
+
+{% import 'macros.html' as macros %}
+
+{% block javascript %}
+<script>
+  $("#deleteSubmitButton").click(function(){
+    $.ajax({
+      url: "{{ url_for('delete_test') }}",
+      type: "POST",
+      data: {"test_id": "{{ test.id }}"},
+      success: function(response) {
+        window.location.href = "{{ url_for('show_tests', feature_id=feature.id) }}";
+      },
+      error: function() {
+        $("#deleteConfirm .modal-footer").html('<div class="alert alert-danger" role="alert">Delete failed. Try again later</div>');
+      }
+    });
+  });
+
+  $("#createDependencySnapshotsButton").click(function(){
+    $.ajax({
+      url: "{{ url_for('api.create_dependency_snapshots') }}",
+      type: "POST",
+      data: {"test_id": "{{ test.id }}"},
+      success: function(response) {
+        window.location.href = "{{ url_for('show_test', feature_id=feature.id, test_id=test.id) }}";
+      },
+      error: function() {
+        $("#createDependencySnapshotsModal .modal-footer").html('<div class="alert alert-danger" role="alert">Creation failed. Try again later</div>');
+      }
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3 class="row">
+    <a href="{{ url_for('show_feature', feature_id=feature.id) }}">{{ feature.name|title }}</a> test {{ test.id }}
+    <div class="dropdown pull-right">
+      {% if test.snapshots|length > 0 %}
+        <div class="btn-group">
+          <button class="btn btn-success dropdown-toggle" type="button" id="snapshotsDropdown" data-toggle="dropdown" aria-expanded="true">
+            Snapshots
+            <span id="snapshotsSpan" class="caret"></span>
+          </button>
+          <ul class="dropdown-menu" role="menu" aria-labelledby="snapshotsDropdown">
+            <li role="presentation" class="dropdown-header">Saved Snapshots</li>
+            {% for snapshot in test.snapshots %}
+              <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ snapshot.url }}">{{ snapshot.slug }}</a></li>
+            {% endfor %}
+            <li role="presentation" class="divider"></li>
+            <li role="presentation" class="dropdown-header">Options</li>
+            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-toggle="modal" data-target="#createSnapshotModal">New Viz Snapshot</a></li>
+            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-toggle="modal" data-target="#deleteSnapshotModal">Delete Snapshot</a></li>
+          </ul>
+        </div>
+      {% endif %}
+      <div class="btn-group">
+        <button class="btn btn-primary dropdown-toggle" type="button" id="dropdownMenu" data-toggle="dropdown" aria-expanded="true">
+          Menu
+          <span id="menuSpan" class="caret"></span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="dropdownMenu">
+          <li role="presentation" class="dropdown-header">View</li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('show_tests', feature_id=feature.id) }}">All Tests</a></li>
+          <li role="presentation" class="divider"></li>
+          <li role="presentation" class="dropdown-header">Create</li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('new_test', feature_id=feature.id) }}">New Test</a></li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="{{ url_for('new_test_from_pcm', feature_id=feature.id) }}">New Test From PCM</a></li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-toggle="modal" data-target="#createSnapshotModal">New Viz Snapshot</a></li>
+          {% if feature.dashboard_slugs %}
+            <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-toggle="modal" data-target="#createDependencySnapshotsModal">Dependency Snapshots</a></li>
+          {% endif %}
+          <li role="presentation" class="divider"></li>
+          <li role="presentation" class="dropdown-header">Delete</li>
+          <li role="presentation"><a role="menuitem" tabindex="-1" href="#" data-toggle="modal" data-target="#deleteConfirm">Delete Test</a></li>
+        </ul>
+      </div>
+    </div>
+  </h3>
+</div>
+
+<div class="row">
+  <div class="list-group col-md-6">
+    <div class="list-group-item active">
+      <div class="list-group-item-heading">Data
+        <a class="pull-right" href="{{ url_for('edit_test', feature_id=feature.id, test_id=test.id) }}"><span class="glyphicon glyphicon-edit" aria-hidden="true" style="color:#FFFFFF"></span></a>
+      </div>
+    </div>
+    <div class="list-group-item"><span class="text-primary">Zone</span>: {{ test.zone }}</div>
+    <div class="list-group-item"><span class="text-primary">Start Time</span>: {{ test.started_at }}</div>
+    <div class="list-group-item"><span class="text-primary">End Time</span>: {{ test.ended_at }}</div>
+    <div class="list-group-item"><span class="text-primary">Target RPS</span>: {{ test.target_rps|num_fmt }}</div>
+    <div class="list-group-item"><span class="text-primary">Max RPS reached</span>: {{ test.max_rps|num_fmt }}</div>
+    <div class="list-group-item"><span class="text-primary">Minutes Sustained</span>: {{ test.sustained_minutes }}</div>
+    <div class="list-group-item"><span class="text-primary">Jira Ticket</span>: {{ macros.jira_url(test.jira_key) }}</div>
+    <div class="list-group-item"><span class="text-primary">Test Successful</span>: {{ macros.status_button(test.successful) }}</div>
+    <div class="list-group-item"><span class="text-primary">Dependency Dashboard Slugs</span>: {{ macros.viz_links(feature.dashboard_slugs.split(',')) }}</div>
+    <div class="list-group-item"><span class="text-primary">Comment</span>: {{ test.comment }}</div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteConfirm" tabindex="-1" role="dialog" aria-labelledby="deleteConfirmLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="deleteConfirmLabel">Delete?</h4>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete this test?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="deleteSubmitButton">Delete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="createSnapshotModal" tabindex="-1" role="dialog" aria-labelledby="createSnapshotModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="createSnapshotModalLabel">Which Dashboard?</h4>
+      </div>
+      <div class="modal-body">
+        <form role="form" action="{{ url_for('api.create_snapshot') }}" id="createSnapshotModalForm" method="post">
+          <input type="hidden" name="test_id" id="test_id" value="{{ test.id }}">
+          <input type="hidden" name="next" id="next" value="{{ url_for('show_test', feature_id=feature.id, test_id=test.id) }}">
+          <div class="form-group">
+            <label for="slug">Dashboard slug name</label>
+            <input type="text" class="form-control" name="slug" id="slug">
+            <p class="help-block">Note: Any automatically collapsed sections in the dashboard will not be snapshotted.</p>
+          </div>
+          <button type="submit" class="btn btn-primary">Create</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="deleteSnapshotModal" tabindex="-1" role="dialog" aria-labelledby="deleteSnapshotModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="deleteSnapshotModalLabel">Delete Snapshot?</h4>
+      </div>
+      <div class="modal-body">
+        <form role="form" action="{{ url_for('api.delete_snapshot') }}" id="deleteSnapshotModalForm" method="post">
+          <input type="hidden" id="test_id" name="test_id" value="{{ test.id }}">
+          <input type="hidden" name="next" id="next" value="{{ url_for('show_test', feature_id=feature.id, test_id=test.id) }}">
+          <div class="form-group">
+            <label for="template_name">Select snapshot</label>
+            <select class="form-control selectpicker" name="snapshot_id">
+              {% for snapshot in test.snapshots %}
+                <option value="{{ snapshot.snapshot_id }}">{{ snapshot.slug }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button type="submit" class="btn btn-primary">Delete</button>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal fade" id="createDependencySnapshotsModal" tabindex="-1" role="dialog" aria-labelledby="createDependencySnapshotsModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title" id="createDependencySnapshotsModalLabel">Create Snapshots?</h4>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to create snapshots for <strong>{{ feature.dashboard_slugs }}</strong> ?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" id="createDependencySnapshotsButton">Create</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

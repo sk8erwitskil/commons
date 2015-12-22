@@ -1,0 +1,35 @@
+import os
+
+environment = os.getenv('ENV', 'staging')
+
+download = Packer.copy('stressdash', version='latest')
+
+run = Process(
+  name = 'run',
+  cmdline = 'chmod +x stressdash.pex && ./stressdash.pex update_weekly_rps --env={{environment}} --twkey=/etc/twkeys/stresstest/stressdash/creds.yml'
+)
+
+task = Task(
+  processes = [download, run],
+  constraints = order(download, run),
+  resources = Resources(cpu = 1, ram = 1 * GB, disk = 1 * GB)
+)
+
+job = Job(
+  service=False,
+  name='stressdash_adhoc_rps',
+  role='stresstest',
+  cluster='smf1',
+  task=task,
+  environment=environment,
+  instances=1,
+  production=(environment == 'prod'),
+)
+
+job_cron = job(
+  name='stressdash_weekly_rps',
+  cron_collision_policy='KILL_EXISTING',
+  cron_schedule='00 00 * * *',
+)
+
+jobs = [job, job_cron]

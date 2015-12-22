@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}{{ form_title }}{% endblock %}
+
+{% block javascript %}
+<script>
+  jQuery(document).ready(function ($) {
+    $(function () {
+      $('#datepicker_started_at').datetimepicker({
+        format: 'YYYY-MM-DD HH:mm:ss'
+      });
+    });
+    $(function () {
+      $('#datepicker_ended_at').datetimepicker({
+        format: 'YYYY-MM-DD HH:mm:ss'
+      });
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3 class="row">{{ form_title|title }}</h3>
+</div>
+
+{% import 'macros.html' as macros %}
+{{ macros.render_form(form, url_for(submit_url, **kwargs)) }}
+{% endblock %}

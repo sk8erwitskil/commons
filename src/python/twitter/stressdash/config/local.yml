@@ -1,0 +1,5 @@
+ENABLE_AUTHENTICATION: false
+ELFOWL_AUTH_DOMAIN: dev.localhost
+MYSQL_USER: stressdash
+MYSQL_PASS: stressdash
+HTTP_URL: "http://localhost:1337"

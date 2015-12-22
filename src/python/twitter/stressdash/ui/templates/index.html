@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}Index{% endblock %}
+
+{% import "macros.html" as macros %}
+
+{% block javascript %}
+<script>
+  $(function() {
+    $("#featureListTable").dataTable({"paging": true, "pagingType": "full_numbers", "lengthMenu": [25, 50, 100]});
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h3 class="row">Features</h3>
+</div>
+
+<div>
+  <table id="featureListTable" class="table table-striped">
+    <thead>
+      <tr>
+        <th class="col-md-2">Name</th>
+        <th class="col-md-1">Max RPS Last 7 Days (All DCs)</th>
+        <th class="col-md-1">Last year's max RPS (All DCs)</th>
+        <th class="col-md-1">Historical max tested RPS (single DC)</th>
+        <th class="col-md-1">Current max tested RPS (single DC)</th>
+        <th class="col-md-1">Target RPS (single DC)</th>
+        <th class="col-md-1">Hichest recorded RPS (All DCs)</th>
+        <th class="col-md-1"># of tests</th>
+        <th class="col-md-1">Latest test</th>
+      </tr>
+    </thead>
+    </tbody>
+      {% for feature in features %}
+        <tr>
+          <td><a href="{{ url_for('show_feature', feature_id=feature.id) }}">{{ feature.name }}</a></td>
+          <td>{{ feature.weekly_max_rps|num_fmt }}</td>
+          <td>{{ feature.yearly_max_rps|num_fmt }}</td>
+          <td>{{ feature.max_tested_total_rps|num_fmt }}</td>
+          <td>{{ feature.current_year_max_rps|num_fmt }}</td>
+          <td>{{ feature.target_rps|num_fmt }}</td>
+          <td>{{ feature.max_total_rps|num_fmt }}</td>
+          <td>{{ feature.tests|length }}</td>
+          <td>{{ macros.test_status(feature.latest_test) }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
